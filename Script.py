@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from time import time
 from typing import List, NamedTuple, Set, Tuple, Dict
 
 BookID = int
@@ -12,10 +13,10 @@ class Library:
     signup: int
     shipping: int
     books: Set[BookID]
-    library_id: LibraryID
+    id: LibraryID
 
     def __init__(self, f, id):
-        self.library_id = id
+        self.id = id
         
         line = f.readline().split()
         self.bookqtt = int(line[0]) # the number of books in this library
@@ -27,8 +28,28 @@ class Library:
         for i in line:
             self.books.add(int(i))
 
+    def time_to_fully_scan(self):
+        val = self.bookqtt//self.shipping
+        if ((self.bookqtt%self.shipping) != 0):
+            val +=1
+        return val
+        
+    def total_process_time(self):
+        return time_to_fully_scan() + self.signup
+     
+    def library_books_value(self, modified_book_value: List[int]) -> int:
+        value = 0
+        for i in self.books:
+            value += modified_book_value[i]
+        return value
+       
+    def value_per_day(self,modified_book_value):
+        self.library_books_value/self.total_process_time
+        pass
+        
+
     def __repr__(self):
-        return f"id: {self.library_id} books: {self.bookqtt} signup: {self.signup} shipping: {self.shipping} books: {self.books}"
+        return f"id: {self.id} books: {self.bookqtt} signup: {self.signup} shipping: {self.shipping} books: {self.books}"
 
 
 class Problem(NamedTuple):
@@ -62,6 +83,8 @@ def loadfile(filename) -> Tuple[List[int], int, List[Library]]:
 
     return Problem(bookscores, days, librarys)
 
+Solution = List[Tuple[LibraryID, List[BookID]]]
+
 def savefile(filename: str, books_by_library: List[Tuple[LibraryID, List[BookID]]]):
     """Takes a list of tuples in the form (library ID, list of books sent by that
     library), in the order in which the libraries are signed up. Writes a
@@ -73,9 +96,14 @@ def savefile(filename: str, books_by_library: List[Tuple[LibraryID, List[BookID]
     (nice)
     """
     with open(filename, "w") as f:
+        # Write the number of libraries
         f.write(f"{len(books_by_library)}\n")
+        
         for library, books in books_by_library:
+            # Write the library ID and number of books
             f.write(f"{library} {len(books)}\n")
+
+            # Write each book, separated by a space
             f.write(f"{' '.join(str(x) for x in books)}\n")
 
 def bookoccurances(book: BookID, librarys: List[Library]) -> int:
@@ -88,24 +116,93 @@ def bookoccurances(book: BookID, librarys: List[Library]) -> int:
             val += 1
     return val
 
-def library_value(library, )
+    # but this will change based on if the book has been documented already
+
+# List[Tuple[LibraryID, List[BookID]]]
+def shit_solution(problem: Problem) -> Solution:
+    book_scores, days_available, libraries = problem
+    current_day = 0
+    solution = []
+    for library in libraries:
+        if current_day > days_available:
+            print("ran out of days, exiting")
+            break
+        solution.append((library.id, list(library.books)))
+        current_day += library.signup
+    else:
+        print("did not run out of days")
+    return solution
+
+def slightly_better_solution(problem: Problem) -> Solution:
+    library_values_per_day = []
+    for i in Problem.books:
+        
+    
+    for i in Problem.libraries:
+        library_values_per_day.append((i.value_per_day(),i.id))
+    
+    
+    pass
+
+def calculate_score(problem: Problem, solution: Solution) -> int:
+    libraries_in_signup_order = [problem.libraries[library_id] for library_id, _ in solution]
+    score = 0
+    upcoming_books_for_libraries = []
+    library_signup_in_progress = None
+    library_signup_days_remaining = 0
+
+    for day in range(problem.days):
+        for library, books in upcoming_books_for_libraries:
+            for _ in range(library.shipping):
+                if any(books):
+                    book_id = books.pop(0)
+                    score += solution.book_scores[book_id]
+
+        if library_signup_days_remaining == 0:
+            if library_signup_in_progress is not None:
+                upcoming_books_for_libraries.append(
+                    (library_signup_in_progress, library.books[:])
+                )
+
+            library_signup_in_progress = libraries_in_signup_order.pop(0)
+            library_signup_days_remaining = library_signup_in_progress.signup
+
+
+PROBLEMS = {
+    "a_example.txt",
+    "b_read_on.txt",
+    "c_incunabula.txt",
+    "d_tough_choices.txt",
+    "e_so_many_books.txt",
+    "f_libraries_of_the_world.txt",
+}
+
 
 if __name__ == "__main__":
-    f = loadfile("b_read_on.txt")
+    filename = "c_incunabula.txt"
+    f = loadfile(filename)
     books = f.book_scores
     days = f.days
     librarys = f.libraries
+
+    for the_filename in PROBLEMS:
+        problem = loadfile(the_filename)
+        start = time()
+        solution = shit_solution(problem)
+        end = time()
+        print(f"Solution for problem {}")
+        print("Estimated score: ", calculate_score(solution))
+        savefile("shit_solution_" + letter, solution)
  
     bookmod = []    # number of times the book occurs in total
     for i in range(len(books)):
         bookmod.append(bookoccurances(i,librarys))
-    modified_book_value = [] # number of total occurances/number of occurences
+    modified_book_values = [] # number of total occurances/number of occurences
     for i in range(len(books)):
-        modified_book_value.append(books[i]/bookmod[i]) # calculate modified book value
+        modified_book_values.append(books[i]/bookmod[i]) # calculate modified book value
     
-    print(f)
+    #print(f)
     
-    print(bookmod)
-    print(books)
-    print(modified_book_value)
-    
+    #print(bookmod)
+    #print(books)
+    print(modified_book_values)
